@@ -69,13 +69,15 @@ func (p *Parser) parseObject() JsonNode {
 
 	node := NewObjectNode()
 
+	mapVal := node.val.(map[string]JsonNode)
+
 	for p.index < len(p.input) {
 		if p.get() == '}' {
 			break
 		}
 		p.skip()
 		name := p.getFieldName()
-		_, exists := node.objectVal[name]
+		_, exists := mapVal[name]
 		if exists {
 			panic(fmt.Sprintf("duplicate field %v", name))
 		}
@@ -83,7 +85,7 @@ func (p *Parser) parseObject() JsonNode {
 			panic(fmt.Sprintf("invalid kvp separator in %s", name))
 		}
 		p.index++
-		node.objectVal[name] = p.parse()
+		mapVal[name] = p.parse()
 		p.index++
 	}
 
@@ -95,14 +97,18 @@ func (p *Parser) parseArray() JsonNode {
 
 	node := NewArrayNode()
 
+	arrVal := node.val.([]JsonNode)
+
 	for p.index < len(p.input) {
 		if p.get() == ']' {
 			break
 		}
 		next := p.parse()
-		node.arrayVal = append(node.arrayVal, next)
+		arrVal = append(arrVal, next)
 		p.index++
 	}
+
+	node.val = arrVal
 
 	p.index++
 

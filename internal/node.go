@@ -18,36 +18,36 @@ const (
 )
 
 type JsonNode struct {
-	objectVal map[string]JsonNode
-	arrayVal  []JsonNode
-	strVal    string
-	numVal    float64
-	boolVal   bool
-	nodeType  jsonType
+	val      any
+	nodeType jsonType
 }
 
 func NewObjectNode() JsonNode {
-	return JsonNode{objectVal: make(map[string]JsonNode), nodeType: jsonTypeObject}
+	return JsonNode{val: make(map[string]JsonNode), nodeType: jsonTypeObject}
 }
 
 func NewArrayNode() JsonNode {
-	return JsonNode{arrayVal: []JsonNode{}, nodeType: jsonTypeArray}
+	return JsonNode{val: []JsonNode{}, nodeType: jsonTypeArray}
 }
 
 func NewStrNode(v string) JsonNode {
-	return JsonNode{strVal: v, nodeType: jsonTypeStr}
+	return JsonNode{val: v, nodeType: jsonTypeStr}
 }
 
 func NewNumNode(v float64) JsonNode {
-	return JsonNode{numVal: v, nodeType: jsonTypeNum}
+	return JsonNode{val: v, nodeType: jsonTypeNum}
 }
 
 func NewBoolNode(v bool) JsonNode {
-	return JsonNode{boolVal: v, nodeType: jsonTypeBool}
+	return JsonNode{val: v, nodeType: jsonTypeBool}
 }
 
 func NewNode() JsonNode {
 	return JsonNode{nodeType: jsonTypeNil}
+}
+
+func (n *JsonNode) Get() *any {
+	return &n.val
 }
 
 func (n *JsonNode) String(sorted bool) string {
@@ -55,11 +55,15 @@ func (n *JsonNode) String(sorted bool) string {
 	case jsonTypeNil:
 		return "null"
 	case jsonTypeObject:
+		objVal, ok := n.val.(map[string]JsonNode)
+		if !ok {
+			panic(fmt.Sprintf("invalid type %T", n.val))
+		}
 		objStr := ""
-		keys := getKeys(n.objectVal, sorted)
+		keys := getKeys(objVal, sorted)
 		for _, key := range keys {
 			objStr = objStr + fmt.Sprintf("%q", key) + ":"
-			value := n.objectVal[key]
+			value := objVal[key]
 			objStr = objStr + value.String(sorted) + ","
 		}
 		if len(objStr) > 0 {
@@ -67,8 +71,12 @@ func (n *JsonNode) String(sorted bool) string {
 		}
 		return fmt.Sprintf("{%s}", objStr)
 	case jsonTypeArray:
+		arrayVal, ok := n.val.([]JsonNode)
+		if !ok {
+			panic(fmt.Sprintf("invalid type %T", n.val))
+		}
 		arrayStr := ""
-		for _, val := range n.arrayVal {
+		for _, val := range arrayVal {
 			next := val.String(sorted)
 			arrayStr = arrayStr + next + ","
 		}
@@ -77,11 +85,23 @@ func (n *JsonNode) String(sorted bool) string {
 		}
 		return fmt.Sprintf("[%s]", arrayStr)
 	case jsonTypeStr:
-		return fmt.Sprintf("\"%s\"", n.strVal)
+		strVal, ok := n.val.(string)
+		if !ok {
+			panic(fmt.Sprintf("invalid type %T", n.val))
+		}
+		return fmt.Sprintf("\"%s\"", strVal)
 	case jsonTypeNum:
-		return strconv.FormatFloat(n.numVal, 'f', -1, 64)
+		numVal, ok := n.val.(float64)
+		if !ok {
+			panic(fmt.Sprintf("invalid type %T", n.val))
+		}
+		return strconv.FormatFloat(numVal, 'f', -1, 64)
 	case jsonTypeBool:
-		if n.boolVal {
+		boolVal, ok := n.val.(bool)
+		if !ok {
+			panic(fmt.Sprintf("invalid type %T", n.val))
+		}
+		if boolVal {
 			return "true"
 		} else {
 			return "false"
@@ -89,6 +109,14 @@ func (n *JsonNode) String(sorted bool) string {
 	default:
 		panic(fmt.Sprintf("not supported jnode type %v", n.nodeType))
 	}
+}
+
+func (n *JsonNode) GetObj() map[string]JsonNode {
+	objVal, ok := n.val.(map[string]JsonNode)
+	if !ok {
+		panic(fmt.Sprintf("invalid type %T", n.val))
+	}
+	return objVal
 }
 
 func getKeys(kvps map[string]JsonNode, sorted bool) []string {

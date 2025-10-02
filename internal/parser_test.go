@@ -14,18 +14,24 @@ func TestParse(t *testing.T) {
 	}{
 		{"empty object", "{}", "{}"},
 		{"empty array", "[]", "[]"},
+		{"string value", "{\"name\": \"Jane\"}}", "{\"name\":\"Jane\"}"},
 		{"array of numbers", "[ 1, 2,3 ]", "[1,2,3]"},
 		{"array of strings", "[\"a\",\"b\",	\"c\"]", "[\"a\",\"b\",\"c\"]"},
 		{"array of bools", "[  true,   false, 	true 	 ]", "[true,false,true]"},
 		{
-			"custom object",
+			"object",
 			"{ \"name\": \"Jane Doe\",  \"age\": 30 ,  \"balance\": -50.2}",
 			"{\"age\":30,\"balance\":-50.2,\"name\":\"Jane Doe\"}",
 		},
 		{
-			"custom object with nested array",
+			"object with nested array",
 			"{ \"name\": \"Jane Doe\",  \"age\": 30 ,  \"balance\": -50.2, \"pay\" : [-100.3, 50,  10000 ]}",
 			"{\"age\":30,\"balance\":-50.2,\"name\":\"Jane Doe\",\"pay\":[-100.3,50,10000]}",
+		},
+		{
+			"object with nested object",
+			"{ \"info\": [1, 2,  3],  \"person\"  : 	{ \"name\": \"Jane Doe\",  \"age\": 30 ,  \"balance\": -50.2, \"pay\" : [-100.3, 50,  10000 ]  }  }	",
+			"{\"info\":[1,2,3],\"person\":{\"age\":30,\"balance\":-50.2,\"name\":\"Jane Doe\",\"pay\":[-100.3,50,10000]}}",
 		},
 	}
 
